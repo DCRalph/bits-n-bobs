@@ -9,23 +9,16 @@ export interface Item {
 
 export const items: Item[] = [
   {
-    title: "Car Auction Scraper",
-    description: "A project to scrape and analyze car auctions.",
+    title: "Police codes",
+    description: "A list of all the codes used by police over the radio.",
     // image: "/images/car-auction.png",
-    href: "/projects/car-auction-scraper",
-    dateAdded: new Date("2023-10-05"),
+    href: "/projects/police-codes",
+    dateAdded: new Date("2025-3-14"),
   },
   {
-    title: "Random Info Collection",
-    description: "A collection of random but useful information.",
-    href: "/projects/random-info",
-    dateAdded: new Date("2023-10-03"),
-  },
-  {
-    title: "Side Project XYZ",
-    description: "An experimental side project of sorts.",
-    // image: "/images/side-project.png",
-    href: "/projects/side-project-xyz",
-    dateAdded: new Date("2023-09-25"),
-  },
+    title: "Car Scraper",
+    description: "Scraps car data from a car turners. I plan to add more websites in the future.",
+    href: "https://cars.w-g.co",
+    dateAdded: new Date("2025-2-25"),
+  }
 ];
