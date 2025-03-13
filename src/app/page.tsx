@@ -15,7 +15,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <header className="container mx-auto p-8 text-center">
+      <header className="container mx-auto p-8 text-center">\
         <h1 className="bg-gradient-to-r from-green-400 via-blue-500 to-purple-600 bg-clip-text text-6xl font-extrabold text-transparent drop-shadow-lg md:text-8xl">
           bits n bobs
         </h1>
