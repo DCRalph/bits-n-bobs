@@ -9,6 +9,13 @@ export interface Item {
 
 export const items: Item[] = [
   {
+    title: "Link2it",
+    description: "Link2it is a link shortener that allows you to shorten links and track the number of clicks. It also includes a link shearing feature similar to link tree and the likes. It also has a bookmarks feature that allows you to save links for later.",
+    // image: "/images/car-auction.png",
+    href: "https://link2it.cc",
+    dateAdded: new Date("2025-3-17"),
+  },
+  {
     title: "Police codes",
     description: "A list of all the codes used by police over the radio.",
     // image: "/images/car-auction.png",
