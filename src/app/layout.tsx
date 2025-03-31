@@ -7,7 +7,7 @@ import { TRPCReactProvider } from "~/trpc/react";
 
 import { ThemeProvider } from "~/components/theme-provider";
 
-import  NavBar  from "~/components/NavBar";
+// import  NavBar  from "~/components/NavBar";
 
 export const metadata: Metadata = {
   title: "Bits N Bobs",
@@ -24,12 +24,10 @@ export default function RootLayout({
       className={`${GeistSans.variable}`}
       suppressHydrationWarning
     >
+      {/* <script src="https://unpkg.com/react-scan/dist/auto.global.js" /> */}
       <body id="rootBody">
         <TRPCReactProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-          >
+          <ThemeProvider attribute="class" defaultTheme="dark">
             {/* <NavBar /> */}
             {children}
           </ThemeProvider>
