@@ -7,6 +7,7 @@ export type Category =
   | "Articles"
   | "Resources"
   | "Other";
+
 export const CATEGORIES: Category[] = [
   "All",
   "Projects",
@@ -28,6 +29,53 @@ export interface Item {
 
 export const items: Item[] = [
   {
+    title: "This",
+    category: "Projects",
+    caption: "This website is a collection of links to various resources.",
+    image: "/images/xp shrek.jpg",
+    description: `# This Website
+
+Welcome, to my digital shitshow. Yeah, I decided to write about my own damn website because, clearly, I'm a narcissistic prick who loves to waste time. You're here whether you like it or not, so buckle the fuck up for a wild ride through tech mess, flashy animations, and the altar of overengineering.
+
+## What the Is Running This Digital Dumpster Fire?
+
+This miserable excuse for a website is powered by **Next.js** - because who the hell isn't riding the Next.js bandwagon these days? The utterly gratuitous visual jazz hands come courtesy of **Framer Motion**, which I use to spawn floating gradient blobs that not only drain your battery but also your will to live.
+
+I've thrown together a tech stack that's as pretentious as it is unnecessary:
+- **React** - yeah, it's 2025 already. Get with the fuckin' times.
+- **Tailwind CSS** - because writing actual, handcrafted CSS is so 2015, and let's face it: I'm too damn lazy.
+- **tRPC** for type-safe API calls, saving me from debugging runtime errors while I guzzle down my morning coffee.
+- **Lucide icons** - not because I give a shit, but because they look damn good next to my half-baked code.
+- **next-themes** for that dark mode toggle you probably flipped once and forgot about while scrolling through more meaningless content.
+
+And let's not forget the animations - non-stop, overblown, and completely unnecessary:
+1. Floating gradient blobs that hypnotize your eyeballs and mock your attention span.
+2. Fancy card hover effects screaming, "Look at me, you dipshit, I'm a coding genius!"
+3. A rotating sparkle by the title because, of course, shiny shit distracts you from the underlying mess.
+
+## Because I Fucking Can - A Brag of Overengineering
+
+Sure, I built this overengineered clusterfuck of a site just because I can. Did I need to deploy Framer Motion for every single damn element? Fuck no. But if you're still dragging your sorry ass here to read my self-indulgent drivel, then either you're a glutton for punishment or just as hooked on shiny distractions as I am. In this twisted carnival of code, feel free to steal any damn snippet you want—I'm not claiming original genius here. It's all a patchwork of borrowed and barely-broken hacks from a pile of overambitious ideas.
+
+## What's Next? MSAILS (More Shit As I Learn Shit)
+
+News flash: this digital dumpster isn't going anywhere. I'm a mad bastard who picks up new tricks and tosses random crap into this site like a drunken carpenter haphazardly nailing planks together. Expect more random, pointless features to be added as I continue to learn new shit and feed my insatiable need to overcomplicate everything. Whether it's a bizarre widget, another flashy-ass animation, or some half-assed experiment, I'll keep churning out this digital mess because:
+- I can.
+- I don't give a flying fuck about conventional design rules.
+- And frankly, watching this mess evolve is more fun than makeing something meaningful.
+
+Buckle up, you miserable bastards. The next update is going to be as unpredictable as my mood swings, and if you don't like it, tough shit. I'm not here to pander to your fragile expectations.
+
+## Final  Thoughts
+
+Screw perfection. Screw convention. I don't give a flying fuck about pleasing anyone's delicate sensibilities. This site is my playground of chaotic code and half-finished experiments, a monument to my relentless pursuit of overkill wrapped in a snarkfest of profanity. So, sit back, relax (or don't), and enjoy the ride through this beautifully disorganized dumpster fire of digital nonsense.
+
+Now, get lost if you want, but remember: in this madhouse, we're all just dancing to the crazy tune of our own twisted version of reality. Cheers, bastards, and stay as unpredictable as a damn lemur on a sugar rush.
+`,
+    href: "https://link2it.cc",
+    dateAdded: new Date("2025-4-1"),
+  },
+  {
     title: "Link2it",
     category: "Projects",
     caption:
@@ -35,22 +83,7 @@ export const items: Item[] = [
     description: `# Overview
 Link2it is a robust link shortening platform that caters to modern needs for efficient link management and tracking.
 
-### Features:
-- **Shortened URLs:** Generate concise and memorable links ideal for social sharing.
-- **Click Analytics:** Monitor detailed statistics like total clicks, geographic origins, device usage, and time-based trends.
-- **Dashboard Integration:** Effortlessly manage, organize, and share multiple links through an intuitive dashboard.
-
-### Benefits:
-- **Efficiency:** Rapid URL generation and seamless distribution.
-- **Data-Driven Insights:** Leverage analytics to optimize your content strategy.
-- **Versatility:** Suitable for personal use, small businesses, and large enterprises alike.
-
-### How It Works:
-Simply enter your long URL into the system, receive a shortened version instantly, and then track its performance in real time via the integrated analytics dashboard. The platform is thoughtfully designed to integrate with various social media and marketing channels.
-
-### Technology Stack:
-- **Backend:** Node.js, Express, MongoDB.
-- **Frontend:** React with a focus on responsive design and interactive user experiences.`,
+`,
     // image: "/images/car-auction.png",
     href: "https://link2it.cc",
     dateAdded: new Date("2025-3-17"),
@@ -63,12 +96,9 @@ Simply enter your long URL into the system, receive a shortened version instantl
     description: `## Police Codes Reference
 This resource provides a comprehensive and easy-to-navigate list of police codes used in radio communications across various departments.
 
-### Key Details:
-- **Code 1:** Typically indicates a response to traffic incidents.
-- **Code 2:** Signifies that emergency assistance is required.
-- **Code 3:** Denotes a routine check or surveillance operation.
+### Ill put some more info here later.
 
-For the most accurate and up-to-date information, please refer to your local police guidelines.`,
+`,
     // image: "/images/car-auction.png",
     href: "/projects/police-codes",
     dateAdded: new Date("2025-3-14"),
@@ -81,23 +111,10 @@ For the most accurate and up-to-date information, please refer to your local pol
     description: `## Car Scraper Overview
 Car Scraper is an advanced automated tool engineered to extract detailed vehicle information from various car trading websites.
 
-### Features:
-- **Data Aggregation:** Collects comprehensive data including pricing, technical specifications, and customer reviews.
-- **Multi-Source Support:** Initially supports one car trading website, with plans to expand to additional platforms.
-- **Analytics Integration:** Offers fundamental analytics to help users quickly grasp market trends and pricing variations.
+Websites scraped from:
+- Turners
 
-### Benefits:
-- **Informed Decision-Making:** Compare diverse vehicle listings to find the best deals.
-- **User-Friendly Interface:** Intuitive design ensures that critical data is always easy to access and understand.
-- **Scalability:** The platform is designed with future growth in mind, promising additional features and extended data sources.
-
-### How It Works:
-Car Scraper uses sophisticated web scraping techniques to navigate car trading platforms and extract the relevant data. The collected information is then processed and displayed in a clean, organized dashboard, aiding side-by-side comparisons and in-depth analysis.
-
-### Underlying Technologies:
-- **Web Scraping Frameworks:** Uses libraries like Cheerio and Puppeteer for efficient data extraction.
-- **Data Processing:** Incorporates robust data cleaning and formatting algorithms.
-- **Modern UI/UX:** Built with contemporary frontend technologies to offer a responsive, engaging user experience.`,
+`,
     href: "https://cars.w-g.co",
     dateAdded: new Date("2025-2-25"),
   },

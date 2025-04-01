@@ -18,8 +18,6 @@ export const itemsRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { query, category, sortOrder } = input;
 
-      // await new Promise((resolve) => setTimeout(resolve, 1000));
-
       // Filter items based on search query
       let filteredItems = items;
 
@@ -46,5 +44,22 @@ export const itemsRouter = createTRPCRouter({
         const dateB = new Date(b.dateAdded).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       });
+    }),
+
+  getItemByTitle: publicProcedure
+    .input(
+      z.object({
+        title: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { title } = input;
+
+      // Find the item with the matching title
+      const item = items.find(
+        (item) => item.title.toLowerCase() === title.toLowerCase(),
+      );
+
+      return item ?? null;
     }),
 });
