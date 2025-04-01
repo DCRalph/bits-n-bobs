@@ -15,8 +15,10 @@ export const itemsRouter = createTRPCRouter({
         sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
       }),
     )
-    .query(({ input }) => {
+    .query(async ({ input }) => {
       const { query, category, sortOrder } = input;
+
+      // await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Filter items based on search query
       let filteredItems = items;
@@ -26,7 +28,7 @@ export const itemsRouter = createTRPCRouter({
         filteredItems = filteredItems.filter((item) => {
           return (
             item.title.toLowerCase().includes(lowerQuery) ||
-            item.description.toLowerCase().includes(lowerQuery)
+            item.caption.toLowerCase().includes(lowerQuery)
           );
         });
       }

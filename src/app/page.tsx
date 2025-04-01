@@ -18,6 +18,7 @@ import {
   X,
   ChevronDown,
   Maximize2,
+  RefreshCcw,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -37,8 +38,11 @@ import {
 } from "~/components/ui/dialog";
 import { motion } from "framer-motion";
 import { CATEGORIES, type Item } from "~/lib/items";
+import ReactMarkdown from "react-markdown";
+import { ReusableDialog } from "~/components/MyDialog";
 
 export default function HomePage() {
+  const utils = api.useUtils();
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -103,6 +107,15 @@ export default function HomePage() {
   };
 
   if (!mounted) return null;
+
+  const cardVariant = {
+    hidden: { y: 20, opacity: 0 },
+    visible: (custom: number) => ({
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.4, delay: custom * 0.1, ease: "easeOut" },
+    }),
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-50 text-gray-900 transition-colors duration-300 dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-900 dark:to-gray-900 dark:text-gray-100">
@@ -288,6 +301,18 @@ export default function HomePage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* refresh button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+              onClick={async () => {
+                await utils.items.getItems.reset();
+              }}
+            >
+              <RefreshCcw className="h-3.5 w-3.5" />
+            </Button>
           </div>
 
           <Button
@@ -318,18 +343,16 @@ export default function HomePage() {
           ) : (
             <>
               {items && items.length > 0 ? (
-                <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                // <AnimatePresence mode="wait">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {items.map((item, index) => (
-                    <motion.li
+                    <motion.div
                       key={item.title}
-                      // initial={{ opacity: 0, y: 20 }}
-                      // animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.4,
-                        delay: index * 0.05,
-                        ease: "easeOut",
-                      }}
-                      className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900/80 dark:hover:shadow-[0_0_25px_rgba(139,92,246,0.15)]"
+                      custom={index}
+                      variants={cardVariant}
+                      initial="hidden"
+                      animate="visible"
+                      className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white/90 backdrop-blur-sm hover:-translate-y-1 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900/80 dark:hover:shadow-[0_0_25px_rgba(139,92,246,0.15)]"
                     >
                       {/* Card glow effect */}
                       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-900/0 via-purple-900/0 to-purple-900/0 opacity-0 blur transition-all duration-500 group-hover:opacity-30"></div>
@@ -347,15 +370,17 @@ export default function HomePage() {
                       )}
 
                       {/* Quick view button */}
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="absolute bottom-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                        onClick={() => openItemModal(item)}
-                      >
-                        <Maximize2 className="mr-1 h-3.5 w-3.5" />
-                        Quick view
-                      </Button>
+                      {item.description && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="absolute bottom-4 right-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                          onClick={() => openItemModal(item)}
+                        >
+                          <Maximize2 className="mr-1 h-3.5 w-3.5" />
+                          Quick view
+                        </Button>
+                      )}
 
                       <div className="h-full p-6">
                         <div className="mb-4 flex items-center justify-between">
@@ -386,14 +411,17 @@ export default function HomePage() {
                           {item.title}
                         </a>
 
-                        <p className="mt-3 text-gray-600 dark:text-gray-400">
-                          {item.description}
-                        </p>
+                        <div className="mt-3 text-gray-600 dark:text-gray-400">
+                          {/* <ReactMarkdown> */}
+                          {item.caption}
+                          {/* </ReactMarkdown> */}
+                        </div>
                       </div>
-                    </motion.li>
+                    </motion.div>
                   ))}
-                </ul>
+                </div>
               ) : (
+                // </AnimatePresence>
                 <motion.div
                   className="flex flex-col items-center justify-center py-16 text-center"
                   initial={{ opacity: 0 }}
@@ -432,8 +460,8 @@ export default function HomePage() {
       </main>
 
       {/* Item detail modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-3xl bg-white text-gray-900 dark:bg-gray-900 dark:text-white">
+      {/* <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white text-gray-900 dark:bg-gray-900 dark:text-white">
           {selectedItem && (
             <>
               <DialogHeader>
@@ -458,8 +486,9 @@ export default function HomePage() {
               )}
 
               <div className="text-gray-700 dark:text-gray-300">
-                <p>{selectedItem.description}</p>
-
+                <div className="prose dark:prose-invert mt-3 text-gray-600 dark:text-gray-400">
+                  <ReactMarkdown>{selectedItem.description}</ReactMarkdown>
+                </div>
                 <div className="mt-6 flex justify-end">
                   <Button asChild>
                     <a
@@ -476,7 +505,50 @@ export default function HomePage() {
             </>
           )}
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
+      <ReusableDialog
+        isOpen={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        title={selectedItem?.title}
+      >
+        {selectedItem && (
+          <>
+            {/* <div className="text-2xl">{selectedItem.title}</div> */}
+            <div className="text-gray-600 dark:text-gray-400">
+              Added on {new Date(selectedItem.dateAdded).toLocaleDateString()}
+            </div>
+
+            {selectedItem.image && (
+              <div className="relative h-64 w-full overflow-hidden rounded-lg">
+                <Image
+                  src={selectedItem.image || "/placeholder.svg"}
+                  alt={selectedItem.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+
+            <div className="text-gray-700 dark:text-gray-300">
+              <div className="prose dark:prose-invert mt-3 text-gray-600 dark:text-gray-400">
+                <ReactMarkdown>{selectedItem.description}</ReactMarkdown>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <Button asChild>
+                  <a
+                    href={selectedItem.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Visit
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </ReusableDialog>
     </div>
   );
 }
