@@ -1,214 +1,150 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { api } from "~/trpc/react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table";
-
-// Helper to generate a safe ID for each section.
-const getSectionId = (section: string) =>
-  section.replace(/\s+/g, "-").toLowerCase();
-
-// Compute a dynamic threshold for an element based on its height relative to the window.
-// If the element is shorter than 50% of the window, use 50%; if it's taller, then adjust.
-const computeDynamicThreshold = (el: HTMLElement) => {
-  const defaultThreshold = 0.5;
-  const elHeight = el.getBoundingClientRect().height;
-  if (elHeight > window.innerHeight * defaultThreshold) {
-    // For a tall element, reduce the threshold proportionally.
-    return (
-      ((window.innerHeight * defaultThreshold) / elHeight) * defaultThreshold
-    );
-  }
-  return defaultThreshold;
-};
+import { Search, X, ArrowUp } from "lucide-react";
+import { Input } from "~/components/ui/input";
+import { Button } from "~/components/ui/button";
+import { Badge } from "~/components/ui/badge";
 
 export default function PoliceCodesPage() {
-  // We keep searchQuery state but leave it empty (since we're not using an input box now).
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeSections, setActiveSections] = useState<string[]>([]);
 
-  // Use the getAll endpoint for full data.
   const allCodesQuery = api.policeCodes.getAll.useQuery();
-  // The search endpoint is still wired up but will never run because searchQuery is always empty.
   const searchCodesQuery = api.policeCodes.search.useQuery(
     { query: searchQuery },
-    { enabled: searchQuery.trim().length > 0 },
+    { enabled: searchQuery.trim().length > 0 }
   );
 
-  // If a search term is entered, use the search results; otherwise, use the full data.
-  // (Since searchQuery is empty, codesData always comes from allCodesQuery.)
   const codesData = searchQuery.trim()
     ? searchCodesQuery.data
     : allCodesQuery.data;
 
-  // Derive sections from the rendered data.
   const sections = useMemo(
     () => (codesData ? Object.keys(codesData) : []),
-    [codesData],
+    [codesData]
   );
 
-  // Default active section if none are set.
-  useEffect(() => {
-    if (codesData && sections.length > 0 && activeSections.length === 0) {
-      if (sections[0]) {
-        setActiveSections([sections[0]]);
-      }
-    }
-  }, [codesData, sections, activeSections]);
+  const totalCodes = useMemo(() => {
+    if (!codesData) return 0;
+    return Object.values(codesData).reduce(
+      (acc, codes) => acc + codes.length,
+      0
+    );
+  }, [codesData]);
 
-  // For each section element, create its own IntersectionObserver with a dynamic threshold.
-  useEffect(() => {
-    const visibilityMap: Record<string, boolean> = {};
-    const observers: IntersectionObserver[] = [];
-
-    sections.forEach((section) => {
-      const el = document.getElementById(getSectionId(section));
-      if (!el) return;
-      const dynamicThreshold = computeDynamicThreshold(el);
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            // Mark the section as visible if its intersection ratio exceeds its threshold.
-            visibilityMap[section] =
-              entry.intersectionRatio >= dynamicThreshold;
-          });
-          // Use the original order from sections.
-          const visibleSections = sections.filter((s) => visibilityMap[s]);
-          setActiveSections(visibleSections);
-        },
-        { threshold: dynamicThreshold },
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
-
-    return () => {
-      observers.forEach((observer) => observer.disconnect());
-    };
-  }, [sections]);
-
-  // Scroll back to the top.
-  const scrollBackToTop = () => {
+  const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // When a sidebar section is clicked, scroll to it.
-  const handleSectionClick = (section: string) => {
-    const el = document.getElementById(getSectionId(section));
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      <div className="container mx-auto max-w-6xl">
-        {/* Page Title */}
-        <h1 className="mb-6 text-center text-4xl font-bold text-white">
-          Police Codes
-        </h1>
-
-        {/* Top Search Bar for police codes */}
-        <div className="mb-8 flex justify-center">
-          <input
-            type="text"
-            placeholder="Search police codes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-md rounded border border-gray-700 bg-gray-800 p-2 text-white placeholder-gray-400"
-          />
-        </div>
-
-        {/* Wrap sidebar and main content */}
-        <div className="flex flex-col md:flex-row">
-          {/* Sidebar Container */}
-          <div className="mb-8 md:mb-0 md:w-1/4 md:pr-8">
-            <aside className="sticky top-8">
-              <h2 className="mb-4 text-2xl font-bold text-white">Sections</h2>
-              <ul>
-                {/* Search Button */}
-                <li>
-                  <button
-                    onClick={scrollBackToTop}
-                    className="mb-2 w-full rounded bg-green-600 px-3 py-2 text-left text-white transition-colors hover:bg-green-700"
-                  >
-                    Search
-                  </button>
-                </li>
-                {sections.map((section) => (
-                  <li key={section}>
-                    <button
-                      onClick={() => handleSectionClick(section)}
-                      className={`mb-2 w-full rounded px-3 py-2 text-left transition-colors ${
-                        activeSections.includes(section)
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                      }`}
-                    >
-                      {section}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </aside>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto max-w-2xl px-4 py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h1 className="text-xl font-semibold">Police Codes</h1>
+            <Badge variant="secondary" className="text-xs">
+              {totalCodes} codes
+            </Badge>
           </div>
 
-          {/* Main Content: Render sections in a 2-column grid */}
-          <main className="grid grid-cols-1 gap-8 md:w-3/4 md:grid-cols-2">
-            {(!codesData || sections.length === 0) && (
-              <p className="col-span-full text-center text-gray-400">
-                No codes found.
-              </p>
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search codes or descriptions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             )}
-
-            {codesData &&
-              sections.map((section) => (
-                <div
-                  key={section}
-                  id={getSectionId(section)}
-                  className="mb-10 scroll-mt-20"
-                >
-                  <h3 className="mb-4 text-xl font-semibold text-white">
-                    {section}
-                  </h3>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-1/4">Code</TableHead>
-                        <TableHead>Description</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {codesData[section]?.map((codeItem, index) => (
-                        <TableRow key={`${section}-${index}-${codeItem.CODE}`}>
-                          <TableCell className="font-medium">
-                            {codeItem.CODE}
-                          </TableCell>
-                          <TableCell>{codeItem.DESCRIPTION}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ))}
-          </main>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Back to Top Button */}
-      <button
-        onClick={scrollBackToTop}
-        className="fixed bottom-4 right-4 rounded bg-blue-600 px-4 py-2 text-white shadow-lg transition-colors hover:bg-blue-700"
+      {/* Main Content */}
+      <main className="container mx-auto max-w-2xl px-4 py-4">
+        {/* Loading State */}
+        {allCodesQuery.isLoading && (
+          <div className="py-12 text-center text-muted-foreground">
+            Loading codes...
+          </div>
+        )}
+
+        {/* No Results */}
+        {!allCodesQuery.isLoading && sections.length === 0 && (
+          <div className="py-12 text-center text-muted-foreground">
+            No codes found.
+          </div>
+        )}
+
+        {/* Sections */}
+        <div className="space-y-6">
+          {codesData &&
+            sections.map((section) => {
+              const codes = codesData[section] ?? [];
+
+              return (
+                <section key={section}>
+                  {/* Section Header */}
+                  <div className="mb-2 flex items-center gap-2 border-b pb-2">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                      {section}
+                    </h2>
+                    <Badge variant="outline" className="text-xs">
+                      {codes.length}
+                    </Badge>
+                  </div>
+
+                  {/* Codes List */}
+                  <div className="divide-y rounded-lg border">
+                    {codes.map((codeItem, index) => (
+                      <div
+                        key={`${section}-${index}-${codeItem.CODE}`}
+                        className="flex"
+                      >
+                        <div className="flex w-20 shrink-0 items-center justify-center bg-muted/30 px-2 py-2.5 sm:w-24">
+                          <code className="text-sm font-semibold">
+                            {codeItem.CODE}
+                          </code>
+                        </div>
+                        <div className="flex-1 px-3 py-2.5">
+                          <span className="text-sm">
+                            {codeItem.DESCRIPTION}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+        </div>
+
+        {/* Spacer for FAB */}
+        <div className="h-16" />
+      </main>
+
+      {/* Back to Top FAB */}
+      <Button
+        onClick={scrollToTop}
+        size="icon"
+        className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg"
+        aria-label="Back to top"
       >
-        Back to Top
-      </button>
+        <ArrowUp className="h-5 w-5" />
+      </Button>
     </div>
   );
 }

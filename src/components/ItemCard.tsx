@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { motion, type Variants } from "motion/react";
 import { ExternalLink, Maximize2, ArrowRight, Sparkles } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -16,7 +16,7 @@ interface ItemCardProps {
 export const ItemCard = ({ item, index, onOpenModal }: ItemCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const cardVariant = {
+  const cardVariant: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: (custom: number) => ({
       y: 0,

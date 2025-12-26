@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 import {
-  type AnimationControls,
+  type animationControls,
   motion,
   type TargetAndTransition,
   type VariantLabels,
@@ -99,7 +99,7 @@ export const AnimatedIcon = ({
     | boolean
     | TargetAndTransition
     | VariantLabels
-    | AnimationControls
+    | typeof animationControls
     | undefined = {};
 
   if (rotate) {
