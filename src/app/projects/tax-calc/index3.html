@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NZ Income Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              nz: {
+                50: "#f0fdf4",
+                100: "#dcfce7",
+                500: "#22c55e",
+                600: "#16a34a",
+                700: "#15803d",
+                800: "#166534",
+                900: "#14532d",
+              },
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-gray-950 text-gray-100 min-h-screen">
+    <div id="app" class="max-w-6xl mx-auto px-4 py-10">
+      <!-- Header -->
+      <div class="text-center mb-6">
+        <h1 class="text-4xl font-bold text-green-400 mb-2">
+          🥝 NZ Income Calculator
+        </h1>
+        <p class="text-gray-400">
+          New Zealand tax rates effective 1 April 2025
+        </p>
+      </div>
+
+      <!-- Import / Export Bar + Settings -->
+      <div class="flex flex-wrap justify-center gap-2 mb-6">
+        <button
+          onclick="exportData()"
+          class="px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm rounded-lg transition-colors flex items-center gap-2"
+        >
+          <span>📤</span> Export Data
+        </button>
+        <label
+          class="px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
+        >
+          <span>📥</span> Import Data
+          <input
+            type="file"
+            accept=".json"
+            onchange="importData(event)"
+            class="hidden"
+          />
+        </label>
+        <button
+          onclick="clearAllData()"
+          class="px-4 py-2 bg-gray-800 hover:bg-red-900/50 border border-gray-700 text-gray-300 text-sm rounded-lg transition-colors flex items-center gap-2"
+        >
+          <span>🗑️</span> Clear All
+        </button>
+
+        <button
+          onclick="toggleSettings()"
+          class="px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 text-sm rounded-lg transition-colors flex items-center gap-2"
+        >
+          <span>⚙️</span> Settings
+        </button>
+      </div>
+
+      <!-- Settings Panel -->
+      <div
+        id="settingsPanel"
+        class="hidden bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800 mb-8"
+      >
+        <h2 class="text-xl font-semibold mb-4 text-cyan-400">
+          Deductions & Options
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <!-- KiwiSaver -->
+          <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 class="font-semibold text-green-300 mb-3">KiwiSaver</h3>
+            <label class="block text-sm text-gray-400 mb-1"
+              >Employee Contribution</label
+            >
+            <select
+              id="ksEmployee"
+              class="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white"
+              onchange="onSettingsChanged()"
+            >
+              <option value="0">0%</option>
+              <option value="0.03">3%</option>
+              <option value="0.04">4%</option>
+              <option value="0.06">6%</option>
+              <option value="0.08">8%</option>
+              <option value="0.10">10%</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-2">
+              Applied on gross salary (employee share only).
+            </p>
+          </div>
+
+          <!-- Student Loan -->
+          <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 class="font-semibold text-green-300 mb-3">Student Loan</h3>
+            <label class="inline-flex items-center gap-2 mb-3">
+              <input
+                id="slEnabled"
+                type="checkbox"
+                class="w-4 h-4 accent-green-500"
+                onchange="onSettingsChanged()"
+              />
+              <span>Enable repayments</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-gray-400 mb-1"
+                  >Rate</label
+                >
+                <div class="relative">
+                  <input
+                    id="slRate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value="0.12"
+                    class="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                    onchange="onSettingsChanged()"
+                  />
+                  <span
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+                    >/1</span
+                  >
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-400 mb-1"
+                  >Annual Threshold</label
+                >
+                <input
+                  id="slThreshold"
+                  type="number"
+                  step="1"
+                  value="22828"
+                  class="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  onchange="onSettingsChanged()"
+                />
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+              12% on income over threshold by default.
+            </p>
+          </div>
+
+          <!-- ACC Earner's Levy -->
+          <div class="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 class="font-semibold text-green-300 mb-3">
+              ACC Earner's Levy
+            </h3>
+            <label class="inline-flex items-center gap-2 mb-3">
+              <input
+                id="accEnabled"
+                type="checkbox"
+                class="w-4 h-4 accent-green-500"
+                onchange="onSettingsChanged()"
+              />
+              <span>Include ACC levy</span>
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-gray-400 mb-1"
+                  >Rate</label
+                >
+                <div class="relative">
+                  <input
+                    id="accRate"
+                    type="number"
+                    step="0.0001"
+                    min="0"
+                    max="1"
+                    value="0.0167"
+                    class="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                    onchange="onSettingsChanged()"
+                  />
+                  <span
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm"
+                    >/1</span
+                  >
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-400 mb-1"
+                  >Max Liable Earnings</label
+                >
+                <input
+                  id="accCap"
+                  type="number"
+                  step="1"
+                  value="142283"
+                  class="w-full px-3 py-2.5 bg-gray-900 border border-gray-700 rounded-lg text-white"
+                  onchange="onSettingsChanged()"
+                />
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+              Turn off to match "income tax only".
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="flex justify-center mb-8">
+        <div class="inline-flex rounded-lg bg-gray-800 p-1 gap-1" id="tabs">
+          <button
+            onclick="switchTab('salary')"
+            id="tab-salary"
+            class="tab-btn px-6 py-2.5 rounded-md text-sm font-medium transition-all bg-green-600 text-white"
+          >
+            💰 Salary Breakdown
+          </button>
+          <button
+            onclick="switchTab('expenses')"
+            id="tab-expenses"
+            class="tab-btn px-6 py-2.5 rounded-md text-sm font-medium transition-all text-gray-400 hover:text-white"
+          >
+            📋 Required Salary
+          </button>
+        </div>
+      </div>
+
+      <!-- ===================== TAB 1: SALARY BREAKDOWN ===================== -->
+      <div id="panel-salary">
+        <div
+          class="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800"
+        >
+          <h2 class="text-xl font-semibold mb-6 text-green-400">
+            Enter Your Annual Salary
+          </h2>
+          <div class="flex flex-col sm:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
+              <label
+                class="block text-sm text-gray-400 mb-1.5"
+                for="salaryInput"
+                >Gross Annual Salary (NZD)</label
+              >
+              <div class="relative">
+                <span
+                  class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg font-semibold"
+                  >$</span
+                >
+                <input
+                  type="text"
+                  id="salaryInput"
+                  placeholder="e.g. 75,000"
+                  oninput="formatSalaryInput(this); calculateSalary()"
+                  class="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <button
+              onclick="calculateSalary()"
+              class="px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors"
+            >
+              Calculate
+            </button>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div id="salaryResults" class="hidden mt-8 space-y-6">
+          <!-- Tax Summary Cards -->
+          <div
+            class="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800"
+          >
+            <h3 class="text-lg font-semibold mb-4 text-green-400">
+              Summary
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Income Tax</p>
+                <p id="sumTax" class="text-2xl font-bold text-red-400"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">ACC</p>
+                <p id="sumAcc" class="text-2xl font-bold text-red-300"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Student Loan</p>
+                <p id="sumSL" class="text-2xl font-bold text-orange-300"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">KiwiSaver</p>
+                <p id="sumKS" class="text-2xl font-bold text-blue-300"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">After-Deductions</p>
+                <p
+                  id="afterTaxAnnual"
+                  class="text-2xl font-bold text-green-400"
+                ></p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Total Deductions</p>
+                <p id="totalDeds" class="text-2xl font-bold text-red-400"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Effective Tax Rate</p>
+                <p id="effectiveRate" class="text-2xl font-bold text-yellow-400"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Gross Annual</p>
+                <p id="sumGross" class="text-2xl font-bold text-gray-200"></p>
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <h4 class="text-sm font-medium text-gray-400 mb-3">
+                Income Tax Bracket Breakdown
+              </h4>
+              <div id="bracketBreakdown" class="space-y-2"></div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div
+              class="bg-gray-900 rounded-2xl p-6 border border-gray-800 flex flex-col items-center"
+            >
+              <h3
+                class="text-lg font-semibold mb-4 text-green-400 self-start"
+              >
+                Gross Income Split
+              </h3>
+              <canvas
+                id="chartDonut"
+                width="280"
+                height="280"
+                class="max-w-full"
+              ></canvas>
+              <div
+                id="chartDonutLegend"
+                class="flex gap-6 mt-4 text-sm"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Breakdown Table -->
+          <div
+            class="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800 overflow-x-auto"
+          >
+            <h3 class="text-lg font-semibold mb-4 text-green-400">
+              Income Breakdown
+            </h3>
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-700">
+                  <th class="text-left py-3 px-2 text-gray-400 font-medium">
+                    Period
+                  </th>
+                  <th class="text-right py-3 px-2 text-gray-400 font-medium">
+                    Gross
+                  </th>
+                  <th class="text-right py-3 px-2 text-gray-400 font-medium">
+                    Income Tax
+                  </th>
+                  <th class="text-right py-3 px-2 text-gray-400 font-medium">
+                    ACC
+                  </th>
+                  <th class="text-right py-3 px-2 text-gray-400 font-medium">
+                    Student Loan
+                  </th>
+                  <th class="text-right py-3 px-2 text-gray-400 font-medium">
+                    KiwiSaver
+                  </th>
+                  <th class="text-right py-3 px-2 text-gray-400 font-medium">
+                    Net (After All)
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="breakdownBody" class="divide-y divide-gray-800"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============= TAB 2: REQUIRED SALARY FROM EXPENSES ============= -->
+      <div id="panel-expenses" class="hidden">
+        <div
+          class="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800"
+        >
+          <h2 class="text-xl font-semibold mb-2 text-green-400">
+            Your Expenses
+          </h2>
+          <p class="text-gray-400 text-sm mb-6">
+            Add all your regular expenses. We'll calculate the gross annual
+            salary you need (before tax) to cover them all.
+          </p>
+
+          <!-- Expense Form -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end mb-4">
+            <div class="sm:col-span-4">
+              <label class="block text-sm text-gray-400 mb-1">Description</label>
+              <input
+                type="text"
+                id="expName"
+                placeholder="e.g. Rent"
+                class="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-sm text-gray-400 mb-1">Amount (NZD)</label>
+              <div class="relative">
+                <span
+                  class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  >$</span
+                >
+                <input
+                  type="text"
+                  id="expAmount"
+                  placeholder="0.00"
+                  oninput="formatExpenseInput(this)"
+                  class="w-full pl-8 pr-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-sm text-gray-400 mb-1">Frequency</label>
+              <select
+                id="expFreq"
+                class="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="weekly">Weekly</option>
+                <option value="fortnightly">Fortnightly</option>
+                <option value="monthly" selected>Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <button
+                onclick="addExpense()"
+                class="w-full px-4 py-2.5 bg-green-600 hover:bg-green-500 text-white font-semibold rounded-lg transition-colors"
+              >
+                + Add
+              </button>
+            </div>
+          </div>
+
+          <!-- Expense List -->
+          <div id="expenseList" class="space-y-2 mt-4"></div>
+
+          <!-- No expenses message -->
+          <div
+            id="noExpenses"
+            class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-700 rounded-xl mt-4"
+          >
+            <p class="text-lg mb-1">No expenses added yet</p>
+            <p class="text-sm">
+              Add your regular expenses above to get started
+            </p>
+          </div>
+        </div>
+
+        <!-- Expense Results -->
+        <div id="expenseResults" class="hidden mt-8 space-y-6">
+          <!-- Summary Cards -->
+          <div
+            class="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800"
+          >
+            <h3 class="text-lg font-semibold mb-4 text-green-400">
+              Required Salary
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Total Annual Expenses</p>
+                <p id="totalExpenses" class="text-2xl font-bold text-orange-400"></p>
+              </div>
+              <div
+                class="bg-gray-800 rounded-xl p-4 text-center border-2 border-green-500/30"
+              >
+                <p class="text-sm text-gray-400 mb-1">Required Gross Salary</p>
+                <p id="requiredGross" class="text-2xl font-bold text-green-400"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Total Deductions</p>
+                <p id="requiredTax" class="text-2xl font-bold text-red-400"></p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-4 text-center">
+                <p class="text-sm text-gray-400 mb-1">Effective Tax Rate</p>
+                <p id="requiredEffRate" class="text-2xl font-bold text-yellow-400"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div
+              class="bg-gray-900 rounded-2xl p-6 border border-gray-800 flex flex-col items-center"
+            >
+              <h3 class="text-lg font-semibold mb-4 text-green-400 self-start">
+                Expense Breakdown
+              </h3>
+              <canvas
+                id="chartExpDonut"
+                width="280"
+                height="280"
+                class="max-w-full"
+              ></canvas>
+              <div
+                id="chartExpDonutLegend"
+                class="flex flex-wrap gap-x-5 gap-y-1 mt-4 text-xs justify-center max-w-md"
+              ></div>
+            </div>
+            <div
+              class="bg-gray-900 rounded-2xl p-6 border border-gray-800 flex flex-col items-center"
+            >
+              <h3 class="text-lg font-semibold mb-4 text-green-400 self-start">
+                Required Salary Split
+              </h3>
+              <canvas
+                id="chartExpSplit"
+                width="280"
+                height="280"
+                class="max-w-full"
+              ></canvas>
+              <div
+                id="chartExpSplitLegend"
+                class="flex gap-6 mt-4 text-sm"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Expenses horizontal bar -->
+          <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+            <h3 class="text-lg font-semibold mb-4 text-green-400">
+              Annual Cost per Expense
+            </h3>
+            <canvas
+              id="chartExpBar"
+              width="700"
+              height="40"
+              class="max-w-full w-full"
+            ></canvas>
+          </div>
+
+          <!-- ============= SALARY COMPARISON SECTION ============= -->
+          <div id="salaryCompSection" class="hidden space-y-6">
+            <!-- Divider -->
+            <div class="flex items-center gap-4 pt-2">
+              <div class="flex-1 h-px bg-gray-700"></div>
+              <h2 class="text-xl font-bold text-cyan-400 shrink-0 flex items-center gap-2">
+                📊 Compared to Your Salary
+              </h2>
+              <div class="flex-1 h-px bg-gray-700"></div>
+            </div>
+
+            <!-- Comparison summary cards -->
+            <div class="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800">
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-gray-800 rounded-xl p-4 text-center">
+                  <p class="text-sm text-gray-400 mb-1">Your Gross Salary</p>
+                  <p id="compActualGross" class="text-2xl font-bold text-blue-400"></p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-4 text-center">
+                  <p class="text-sm text-gray-400 mb-1">Your Net Salary</p>
+                  <p id="compActualNet" class="text-2xl font-bold text-blue-300"></p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-4 text-center">
+                  <p class="text-sm text-gray-400 mb-1">Expenses (% of Net)</p>
+                  <p id="compExpPctNet" class="text-2xl font-bold"></p>
+                </div>
+                <div class="bg-gray-800 rounded-xl p-4 text-center">
+                  <p class="text-sm text-gray-400 mb-1" id="compSurplusLabel">
+                    Surplus / Year
+                  </p>
+                  <p id="compSurplus" class="text-2xl font-bold"></p>
+                </div>
+              </div>
+
+              <!-- Surplus period breakdown -->
+              <div id="compSurplusBreakdown" class="mt-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="compSurplusPeriods"></div>
+              </div>
+            </div>
+
+            <!-- Comparison charts row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <!-- Actual salary allocation donut -->
+              <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800 flex flex-col items-center">
+                <h3 class="text-lg font-semibold mb-4 text-cyan-400 self-start">
+                  Your Salary Allocation
+                </h3>
+                <canvas id="chartCompDonut" width="280" height="280" class="max-w-full"></canvas>
+                <div id="chartCompDonutLegend" class="flex flex-wrap gap-x-5 gap-y-1 mt-4 text-sm justify-center"></div>
+              </div>
+
+              <!-- Actual vs Required bar -->
+              <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800 flex flex-col">
+                <h3 class="text-lg font-semibold mb-4 text-cyan-400">
+                  Actual vs Required Salary
+                </h3>
+                <canvas id="chartCompBar" width="500" height="280" class="max-w-full"></canvas>
+                <div id="chartCompBarLegend" class="flex gap-6 mt-4 text-sm justify-center"></div>
+              </div>
+            </div>
+
+            <!-- Where Your Money Goes -->
+            <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h3 class="text-lg font-semibold mb-4 text-cyan-400">
+                Where Your Money Goes
+              </h3>
+              <canvas id="chartWaterfall" width="700" height="300" class="max-w-full w-full"></canvas>
+              <div id="chartWaterfallLegend" class="flex flex-wrap gap-4 mt-4 text-xs justify-center"></div>
+            </div>
+
+            <!-- Monthly budget gauge -->
+            <div class="bg-gray-900 rounded-2xl p-6 border border-gray-800">
+              <h3 class="text-lg font-semibold mb-4 text-cyan-400">
+                Monthly Budget Overview
+              </h3>
+              <canvas id="chartGauge" width="700" height="100" class="max-w-full w-full"></canvas>
+              <div id="chartGaugeLegend" class="flex flex-wrap gap-4 mt-4 text-xs justify-center"></div>
+            </div>
+          </div>
+
+          <!-- Period breakdown table -->
+          <div
+            class="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-800 overflow-x-auto"
+          >
+            <h3 class="text-lg font-semibold mb-4 text-green-400">
+              Required Gross Salary by Period
+            </h3>
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-700">
+                  <th class="text-left py-2 px-2 text-gray-400 font-medium">
+                    Period
+                  </th>
+                  <th class="text-right py-2 px-2 text-gray-400 font-medium">
+                    Gross
+                  </th>
+                  <th class="text-right py-2 px-2 text-gray-400 font-medium">
+                    Net (After Deductions)
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="requiredBreakdownBody" class="divide-y divide-gray-800"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-12 text-center text-gray-600 text-xs">
+        <p>
+          NZ tax rates from 1 April 2025 (IRD). Estimates only — ACC, KiwiSaver,
+          and student loan are configurable in Settings.
+        </p>
+      </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div
+      id="toast"
+      class="fixed bottom-6 right-6 bg-gray-800 border border-gray-700 text-white px-5 py-3 rounded-xl shadow-2xl transition-all duration-300 opacity-0 translate-y-4 pointer-events-none text-sm flex items-center gap-2 z-50"
+    >
+      <span id="toastIcon">✅</span>
+      <span id="toastMsg"></span>
+    </div>
+
+    <script>
+      // ============================================
+      // NZ Tax Brackets (from 1 April 2025)
+      // ============================================
+      const TAX_BRACKETS = [
+        { min: 0, max: 15600, rate: 0.105 },
+        { min: 15600, max: 53500, rate: 0.175 },
+        { min: 53500, max: 78100, rate: 0.3 },
+        { min: 78100, max: 180000, rate: 0.33 },
+        { min: 180000, max: Infinity, rate: 0.39 },
+      ];
+
+      const PERIODS = [
+        { label: "Weekly", divisor: 52 },
+        { label: "Fortnightly", divisor: 26 },
+        { label: "Monthly", divisor: 12 },
+        { label: "Quarterly", divisor: 4 },
+        { label: "Annually", divisor: 1 },
+      ];
+
+      const FREQ_TO_ANNUAL = {
+        weekly: 52,
+        fortnightly: 26,
+        monthly: 12,
+        quarterly: 4,
+        yearly: 1,
+      };
+
+      const CHART_COLORS = [
+        "#22c55e",
+        "#3b82f6",
+        "#f59e0b",
+        "#ef4444",
+        "#a855f7",
+        "#06b6d4",
+        "#ec4899",
+        "#f97316",
+        "#14b8a6",
+        "#6366f1",
+        "#84cc16",
+        "#e879f9",
+        "#fb923c",
+        "#2dd4bf",
+        "#818cf8",
+      ];
+
+      let expenses = [];
+      let currentTab = "salary";
+
+      // Default settings
+      const defaultSettings = {
+        ksEmployee: 0, // 0..0.10
+        slEnabled: false,
+        slRate: 0.12,
+        slThreshold: 22828,
+        accEnabled: false, // off by default per your note
+        accRate: 0.0167,
+        accCap: 142283,
+      };
+      let settings = { ...defaultSettings };
+
+      // ============================================
+      // TOAST
+      // ============================================
+      function showToast(msg, icon = "✅") {
+        const t = document.getElementById("toast");
+        document.getElementById("toastMsg").textContent = msg;
+        document.getElementById("toastIcon").textContent = icon;
+        t.classList.remove("opacity-0", "translate-y-4");
+        t.classList.add("opacity-100", "translate-y-0");
+        clearTimeout(window._toastTimer);
+        window._toastTimer = setTimeout(() => {
+          t.classList.add("opacity-0", "translate-y-4");
+          t.classList.remove("opacity-100", "translate-y-0");
+        }, 2500);
+      }
+
+      // ============================================
+      // LOCAL STORAGE
+      // ============================================
+      const STORAGE_KEY = "nz_income_calc";
+
+      function saveToStorage() {
+        const data = {
+          salary: document.getElementById("salaryInput").value,
+          expenses,
+          tab: currentTab,
+          settings,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+
+      function loadFromStorage() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        try {
+          const data = JSON.parse(raw);
+          if (data.settings) {
+            settings = { ...defaultSettings, ...data.settings };
+            applySettingsToUI();
+          } else {
+            applySettingsToUI();
+          }
+          if (data.salary) {
+            document.getElementById("salaryInput").value = data.salary;
+            calculateSalary();
+          }
+          if (data.expenses && Array.isArray(data.expenses)) {
+            expenses = data.expenses;
+            renderExpenses();
+          }
+          if (data.tab) {
+            switchTab(data.tab);
+          }
+        } catch (e) {
+          console.warn("Failed to load saved data", e);
+        }
+      }
+
+      // ============================================
+      // IMPORT / EXPORT
+      // ============================================
+      function exportData() {
+        const data = {
+          version: 2,
+          exportedAt: new Date().toISOString(),
+          salary: document.getElementById("salaryInput").value,
+          expenses,
+          settings,
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `nz-income-calc-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Data exported successfully", "📤");
+      }
+
+      function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (data.salary !== undefined) {
+              document.getElementById("salaryInput").value = data.salary;
+            }
+            if (data.expenses && Array.isArray(data.expenses)) {
+              expenses = data.expenses;
+              renderExpenses();
+            }
+            if (data.settings) {
+              settings = { ...defaultSettings, ...data.settings };
+              applySettingsToUI();
+            }
+            calculateSalary();
+            saveToStorage();
+            showToast(
+              `Imported ${expenses.length} expense(s) successfully`,
+              "📥"
+            );
+          } catch (err) {
+            console.error(err);
+            showToast("Invalid file format", "❌");
+          }
+        };
+        reader.readAsText(file);
+        event.target.value = "";
+      }
+
+      function clearAllData() {
+        if (
+          !confirm(
+            "Are you sure you want to clear all data? This cannot be undone."
+          )
+        )
+          return;
+        expenses = [];
+        document.getElementById("salaryInput").value = "";
+        document.getElementById("salaryResults").classList.add("hidden");
+        renderExpenses();
+        settings = { ...defaultSettings };
+        applySettingsToUI();
+        localStorage.removeItem(STORAGE_KEY);
+        showToast("All data cleared", "🗑️");
+      }
+
+      // ============================================
+      // SETTINGS HANDLERS
+      // ============================================
+      function toggleSettings() {
+        const p = document.getElementById("settingsPanel");
+        p.classList.toggle("hidden");
+      }
+
+      function applySettingsToUI() {
+        document.getElementById("ksEmployee").value = String(settings.ksEmployee);
+        document.getElementById("slEnabled").checked = !!settings.slEnabled;
+        document.getElementById("slRate").value = settings.slRate;
+        document.getElementById("slThreshold").value = settings.slThreshold;
+        document.getElementById("accEnabled").checked = !!settings.accEnabled;
+        document.getElementById("accRate").value = settings.accRate;
+        document.getElementById("accCap").value = settings.accCap;
+      }
+
+      function onSettingsChanged() {
+        settings.ksEmployee = parseFloat(
+          document.getElementById("ksEmployee").value
+        );
+        settings.slEnabled = document.getElementById("slEnabled").checked;
+        settings.slRate = clamp(
+          parseFloat(document.getElementById("slRate").value) || 0,
+          0,
+          1
+        );
+        settings.slThreshold =
+          parseFloat(document.getElementById("slThreshold").value) || 0;
+        settings.accEnabled = document.getElementById("accEnabled").checked;
+        settings.accRate = clamp(
+          parseFloat(document.getElementById("accRate").value) || 0,
+          0,
+          1
+        );
+        settings.accCap =
+          parseFloat(document.getElementById("accCap").value) || 0;
+
+        saveToStorage();
+        calculateSalary();
+      }
+
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+      }
+
+      // ============================================
+      // TAB SWITCHING
+      // ============================================
+      function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll(".tab-btn").forEach((b) => {
+          b.className =
+            "tab-btn px-6 py-2.5 rounded-md text-sm font-medium transition-all text-gray-400 hover:text-white";
+        });
+        document.getElementById("tab-" + tab).className =
+          "tab-btn px-6 py-2.5 rounded-md text-sm font-medium transition-all bg-green-600 text-white";
+        document
+          .getElementById("panel-salary")
+          .classList.toggle("hidden", tab !== "salary");
+        document
+          .getElementById("panel-expenses")
+          .classList.toggle("hidden", tab !== "expenses");
+        saveToStorage();
+        if (tab === "expenses" && expenses.length > 0) {
+          calculateExpenses();
+        }
+      }
+
+      // ============================================
+      // FORMAT HELPERS
+      // ============================================
+      function money(n) {
+        const neg = n < 0;
+        const abs = Math.abs(n);
+        const formatted =
+          "$" +
+          abs.toLocaleString("en-NZ", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+        return neg ? "-" + formatted : formatted;
+      }
+
+      function parseMoney(str) {
+        return parseFloat(str.replace(/[^0-9.]/g, "")) || 0;
+      }
+
+      function formatSalaryInput(el) {
+        let raw = el.value.replace(/[^0-9]/g, "");
+        if (raw) el.value = parseInt(raw).toLocaleString("en-NZ");
+      }
+
+      function formatExpenseInput(el) {
+        let raw = el.value.replace(/[^0-9.]/g, "");
+        const parts = raw.split(".");
+        if (parts.length > 2) raw = parts[0] + "." + parts.slice(1).join("");
+        el.value = raw;
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function getSalaryValue() {
+        return parseMoney(document.getElementById("salaryInput").value);
+      }
+
+      // ============================================
+      // TAX & DEDUCTION CALCULATION
+      // ============================================
+      function calcIncomeTax(annualIncome) {
+        let remaining = annualIncome;
+        let totalTax = 0;
+        const breakdown = [];
+
+        for (const bracket of TAX_BRACKETS) {
+          if (remaining <= 0) break;
+          const bracketWidth =
+            bracket.max === Infinity ? remaining : bracket.max - bracket.min;
+          const taxable = Math.min(remaining, bracketWidth);
+          const tax = Math.max(0, taxable) * bracket.rate;
+          totalTax += tax;
+          if (taxable > 0) {
+            breakdown.push({
+              min: bracket.min,
+              max: bracket.max,
+              rate: bracket.rate,
+              taxable,
+              tax,
+            });
+          }
+          remaining -= taxable;
+        }
+        return { totalTax, breakdown };
+      }
+
+      function calcAcc(annualIncome) {
+        if (!settings.accEnabled) return 0;
+        const liable = Math.min(annualIncome, settings.accCap);
+        return liable * settings.accRate;
+      }
+
+      function calcKiwiSaver(annualIncome) {
+        const rate = settings.ksEmployee || 0;
+        return annualIncome * rate;
+      }
+
+      function calcStudentLoan(annualIncome) {
+        if (!settings.slEnabled) return 0;
+        const over = Math.max(0, annualIncome - settings.slThreshold);
+        return over * settings.slRate;
+      }
+
+      function calcAllDeductions(annualIncome) {
+        const { totalTax, breakdown } = calcIncomeTax(annualIncome);
+        const acc = calcAcc(annualIncome);
+        const ks = calcKiwiSaver(annualIncome);
+        const sl = calcStudentLoan(annualIncome);
+        const total = totalTax + acc + ks + sl;
+        const net = annualIncome - total;
+        return { totalTax, acc, ks, sl, total, net, breakdown };
+      }
+
+      // Reverse: find gross needed so that net (after income tax, acc, sl, ks) equals targetNet
+      function grossFromTargetNet(targetNet) {
+        // We’ll solve with a robust monotonic binary search
+        let lo = 0;
+        let hi = Math.max(targetNet * 2.5, 1); // start guess
+        // Increase hi until net(hi) >= targetNet
+        for (let i = 0; i < 20; i++) {
+          const netHi = calcAllDeductions(hi).net;
+          if (netHi >= targetNet) break;
+          hi *= 2;
+          if (hi > 1e8) break;
+        }
+        let ans = hi;
+        for (let i = 0; i < 60; i++) {
+          const mid = (lo + hi) / 2;
+          const netMid = calcAllDeductions(mid).net;
+          if (netMid >= targetNet) {
+            ans = mid;
+            hi = mid;
+          } else {
+            lo = mid;
+          }
+        }
+        return ans;
+      }
+
+      // ============================================
+      // CANVAS CHART HELPERS
+      // ============================================
+      function hiDpiCanvas(canvas) {
+        const dpr = window.devicePixelRatio || 1;
+        const w = canvas.width;
+        const h = canvas.height;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        const ctx = canvas.getContext("2d");
+        ctx.scale(dpr, dpr);
+        return { ctx, w, h };
+      }
+
+      function drawDonut(canvasId, legendId, segments, centerLines) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const origW = 280,
+          origH = 280;
+        canvas.width = origW;
+        canvas.height = origH;
+        const { ctx, w, h } = hiDpiCanvas(canvas);
+
+        const cx = w / 2,
+          cy = h / 2;
+        const outerR = Math.min(w, h) / 2 - 10;
+        const innerR = outerR * 0.58;
+        const total = segments.reduce((s, seg) => s + seg.value, 0);
+        if (total <= 0) return;
+
+        let startAngle = -Math.PI / 2;
+        segments.forEach((seg) => {
+          const sliceAngle = (seg.value / total) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.arc(cx, cy, outerR, startAngle, startAngle + sliceAngle);
+          ctx.arc(cx, cy, innerR, startAngle + sliceAngle, startAngle, true);
+          ctx.closePath();
+          ctx.fillStyle = seg.color;
+          ctx.fill();
+          startAngle += sliceAngle;
+        });
+
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        if (centerLines) {
+          ctx.font = "bold 18px system-ui, sans-serif";
+          ctx.fillText(centerLines[0], cx, cy - 6);
+          ctx.font = "13px system-ui, sans-serif";
+          ctx.fillStyle = "#9ca3af";
+          ctx.fillText(centerLines[1], cx, cy + 16);
+        }
+
+        const legendEl = document.getElementById(legendId);
+        if (legendEl) {
+          legendEl.innerHTML = segments
+            .map((seg) => {
+              const pct = ((seg.value / total) * 100).toFixed(1);
+              return `<div class="flex items-center gap-1.5">
+                <span class="inline-block w-3 h-3 rounded-sm shrink-0" style="background:${seg.color}"></span>
+                <span class="text-gray-300">${seg.label}</span>
+                <span class="text-gray-500">${pct}%</span>
+              </div>`;
+            })
+            .join("");
+        }
+      }
+
+      function drawGroupedBar(canvasId, legendId, labels, datasets) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const origW = 500,
+          origH = 280;
+        canvas.width = origW;
+        canvas.height = origH;
+        const { ctx, w, h } = hiDpiCanvas(canvas);
+
+        const pad = { top: 20, right: 20, bottom: 40, left: 65 };
+        const chartW = w - pad.left - pad.right;
+        const chartH = h - pad.top - pad.bottom;
+
+        const allVals = datasets.flatMap((d) => d.values);
+        const maxVal = Math.max(...allVals, 1);
+
+        const groupW = chartW / labels.length;
+        const barW = groupW / (datasets.length + 1);
+
+        ctx.strokeStyle = "#374151";
+        ctx.lineWidth = 0.5;
+        ctx.fillStyle = "#9ca3af";
+        ctx.font = "11px system-ui, sans-serif";
+        ctx.textAlign = "right";
+        for (let i = 0; i <= 4; i++) {
+          const y = pad.top + chartH - (i / 4) * chartH;
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(w - pad.right, y);
+          ctx.stroke();
+          const val = (maxVal * i) / 4;
+          ctx.fillText(
+            "$" + Math.round(val).toLocaleString(),
+            pad.left - 8,
+            y + 4
+          );
+        }
+
+        datasets.forEach((ds, di) => {
+          ds.values.forEach((val, vi) => {
+            const x = pad.left + vi * groupW + (di + 0.5) * barW;
+            const barH = (val / maxVal) * chartH;
+            const y = pad.top + chartH - barH;
+            ctx.fillStyle = ds.color;
+            ctx.beginPath();
+            roundedRect(ctx, x, y, barW * 0.85, barH, 3);
+            ctx.fill();
+          });
+        });
+
+        ctx.fillStyle = "#9ca3af";
+        ctx.font = "11px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        labels.forEach((l, i) => {
+          const x = pad.left + i * groupW + groupW / 2;
+          ctx.fillText(l, x, h - pad.bottom + 18);
+        });
+
+        const legendEl = document.getElementById(legendId);
+        if (legendEl) {
+          legendEl.innerHTML = datasets
+            .map(
+              (ds) =>
+                `<div class="flex items-center gap-1.5">
+                  <span class="inline-block w-3 h-3 rounded-sm" style="background:${ds.color}"></span>
+                  <span class="text-gray-300">${ds.label}</span>
+                </div>`
+            )
+            .join("");
+        }
+      }
+
+      function drawHorizontalBar(canvasId, items) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const barH = 32;
+        const gap = 8;
+        const origH = Math.max(100, items.length * (barH + gap) + 30);
+        const origW = 700;
+        canvas.width = origW;
+        canvas.height = origH;
+        const { ctx, w, h } = hiDpiCanvas(canvas);
+
+        const pad = { left: 120, right: 80 };
+        const chartW = w - pad.left - pad.right;
+        const maxVal = Math.max(...items.map((i) => i.value), 1);
+
+        items.forEach((item, i) => {
+          const y = i * (barH + gap) + 10;
+          const bw = (item.value / maxVal) * chartW;
+
+          ctx.fillStyle =
+            item.color || CHART_COLORS[i % CHART_COLORS.length];
+          ctx.beginPath();
+          roundedRect(ctx, pad.left, y, Math.max(bw, 4), barH, 4);
+          ctx.fill();
+
+          ctx.fillStyle = "#d1d5db";
+          ctx.font = "12px system-ui, sans-serif";
+          ctx.textAlign = "right";
+          ctx.fillText(
+            truncate(item.label, 16),
+            pad.left - 8,
+            y + barH / 2 + 4
+          );
+
+          ctx.fillStyle = "#9ca3af";
+          ctx.textAlign = "left";
+          ctx.fillText(money(item.value), pad.left + bw + 8, y + barH / 2 + 4);
+        });
+      }
+
+      function drawWaterfall(canvasId, legendId, items) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const origW = 700,
+          origH = 300;
+        canvas.width = origW;
+        canvas.height = origH;
+        const { ctx, w, h } = hiDpiCanvas(canvas);
+
+        const pad = { top: 30, right: 20, bottom: 60, left: 65 };
+        const chartW = w - pad.left - pad.right;
+        const chartH = h - pad.top - pad.bottom;
+
+        const maxVal = Math.max(...items.map((i) => i._top || i.value), 1);
+        const barW = Math.min((chartW / items.length) * 0.65, 60);
+        const groupW = chartW / items.length;
+
+        ctx.strokeStyle = "#374151";
+        ctx.lineWidth = 0.5;
+        ctx.fillStyle = "#9ca3af";
+        ctx.font = "11px system-ui, sans-serif";
+        ctx.textAlign = "right";
+        for (let i = 0; i <= 4; i++) {
+          const y = pad.top + chartH - (i / 4) * chartH;
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(w - pad.right, y);
+          ctx.stroke();
+          ctx.fillText(
+            "$" + Math.round((maxVal * i) / 4).toLocaleString(),
+            pad.left - 8,
+            y + 4
+          );
+        }
+
+        let running = 0;
+        items.forEach((item, i) => {
+          const x = pad.left + i * groupW + (groupW - barW) / 2;
+
+          let barBottom, barHeight;
+          if (item.type === "start") {
+            running = item.value;
+            barBottom = 0;
+            barHeight = (item.value / maxVal) * chartH;
+          } else if (item.type === "subtract") {
+            const prevRunning = running;
+            running -= item.value;
+            barBottom = (running / maxVal) * chartH;
+            barHeight = (item.value / maxVal) * chartH;
+          } else {
+            barBottom = 0;
+            barHeight = (item.value / maxVal) * chartH;
+          }
+
+          const y = pad.top + chartH - barBottom - barHeight;
+
+          ctx.fillStyle = item.color;
+          ctx.beginPath();
+          roundedRect(ctx, x, y, barW, barHeight, 3);
+          ctx.fill();
+
+          if (i > 0 && i < items.length - 1 && item.type === "subtract") {
+            const prevX =
+              pad.left + (i - 1) * groupW + (groupW - barW) / 2 + barW;
+            const lineY = y + barHeight;
+            ctx.strokeStyle = "#4b5563";
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(prevX, lineY);
+            ctx.lineTo(x, lineY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          ctx.fillStyle = "#d1d5db";
+          ctx.font = "10px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText(money(item.value), x + barW / 2, y - 6);
+        });
+
+        ctx.fillStyle = "#9ca3af";
+        ctx.font = "10px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        items.forEach((item, i) => {
+          const x = pad.left + i * groupW + groupW / 2;
+          const lines = wrapText(item.label, 10);
+          lines.forEach((line, li) => {
+            ctx.fillText(line, x, h - pad.bottom + 14 + li * 13);
+          });
+        });
+
+        const legendEl = document.getElementById(legendId);
+        if (legendEl) {
+          const unique = [];
+          const seen = new Set();
+          items.forEach((item) => {
+            if (!seen.has(item.color)) {
+              seen.add(item.color);
+              unique.push({ label: item.legendLabel || item.label, color: item.color });
+            }
+          });
+          legendEl.innerHTML = unique
+            .map(
+              (u) =>
+                `<div class="flex items-center gap-1.5">
+                  <span class="inline-block w-3 h-3 rounded-sm" style="background:${u.color}"></span>
+                  <span class="text-gray-300">${u.label}</span>
+                </div>`
+            )
+            .join("");
+        }
+      }
+
+      function drawGauge(canvasId, legendId, segments, total) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const origW = 700,
+          origH = 100;
+        canvas.width = origW;
+        canvas.height = origH;
+        const { ctx, w, h } = hiDpiCanvas(canvas);
+
+        const pad = { left: 20, right: 20, top: 25, bottom: 35 };
+        const barW = w - pad.left - pad.right;
+        const barH = 36;
+        const barY = pad.top;
+
+        ctx.fillStyle = "#1f2937";
+        ctx.beginPath();
+        roundedRect(ctx, pad.left, barY, barW, barH, 8);
+        ctx.fill();
+
+        let x = pad.left;
+        segments.forEach((seg, i) => {
+          const sw = (seg.value / total) * barW;
+          if (sw < 1) return;
+          ctx.fillStyle = seg.color;
+          ctx.beginPath();
+          if (i === 0) {
+            roundedRectLeft(ctx, x, barY, sw, barH, 8);
+          } else if (i === segments.length - 1 || x + sw >= pad.left + barW - 1) {
+            roundedRectRight(ctx, x, barY, sw, barH, 8);
+          } else {
+            ctx.rect(x, barY, sw, barH);
+          }
+          ctx.fill();
+
+          if (sw > 55) {
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 11px system-ui, sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(money(seg.value), x + sw / 2, barY + barH / 2 + 4);
+          }
+          x += sw;
+        });
+
+        ctx.font = "10px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        x = pad.left;
+        segments.forEach((seg) => {
+          const sw = (seg.value / total) * barW;
+          if (sw > 40) {
+            ctx.fillStyle = "#9ca3af";
+            const pct = ((seg.value / total) * 100).toFixed(0);
+            ctx.fillText(seg.label + " " + pct + "%", x + sw / 2, barY + barH + 16);
+          }
+          x += sw;
+        });
+
+        const legendEl = document.getElementById(legendId);
+        if (legendEl) {
+          legendEl.innerHTML = segments
+            .map((seg) => {
+              const pct = ((seg.value / total) * 100).toFixed(1);
+              return `<div class="flex items-center gap-1.5">
+                <span class="inline-block w-3 h-3 rounded-sm" style="background:${seg.color}"></span>
+                <span class="text-gray-300">${seg.label}</span>
+                <span class="text-gray-500">${money(seg.value)} (${pct}%)</span>
+              </div>`;
+            })
+            .join("");
+        }
+      }
+
+      function roundedRect(ctx, x, y, w, h, r) {
+        if (h < 0) {
+          y += h;
+          h = -h;
+        }
+        r = Math.min(r, h / 2, w / 2);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x, y, x + r, y, r);
+      }
+      function roundedRectLeft(ctx, x, y, w, h, r) {
+        r = Math.min(r, h / 2, w / 2);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w, y);
+        ctx.lineTo(x + w, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r);
+        ctx.arcTo(x, y, x + r, y, r);
+      }
+      function roundedRectRight(ctx, x, y, w, h, r) {
+        r = Math.min(r, h / 2, w / 2);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x, y + h);
+        ctx.lineTo(x, y);
+      }
+      function shortNum(n) {
+        if (n >= 1000) return Math.round(n / 1000) + "k";
+        return n.toString();
+      }
+      function truncate(str, max) {
+        return str.length > max ? str.slice(0, max - 1) + "…" : str;
+      }
+      function wrapText(str, max) {
+        if (str.length <= max) return [str];
+        const mid = str.lastIndexOf(" ", max);
+        if (mid > 0) return [str.slice(0, mid), str.slice(mid + 1)];
+        return [str.slice(0, max), str.slice(max)];
+      }
+
+      // ============================================
+      // TAB 1: SALARY BREAKDOWN
+      // ============================================
+      function calculateSalary() {
+        const input = document.getElementById("salaryInput").value;
+        const salary = parseMoney(input);
+        if (!salary || salary <= 0) {
+          document.getElementById("salaryResults").classList.add("hidden");
+          saveToStorage();
+          return;
+        }
+
+        const { totalTax, acc, ks, sl, total, net, breakdown } =
+          calcAllDeductions(salary);
+
+        const effectiveRate = (totalTax / salary) * 100;
+
+        document.getElementById("sumTax").textContent = money(totalTax);
+        document.getElementById("sumAcc").textContent = money(acc);
+        document.getElementById("sumSL").textContent = money(sl);
+        document.getElementById("sumKS").textContent = money(ks);
+        document.getElementById("totalDeds").textContent = money(total);
+        document.getElementById("effectiveRate").textContent =
+          effectiveRate.toFixed(2) + "%";
+        document.getElementById("afterTaxAnnual").textContent = money(net);
+        document.getElementById("sumGross").textContent = money(salary);
+
+        const bracketDiv = document.getElementById("bracketBreakdown");
+        bracketDiv.innerHTML = breakdown
+          .map((b) => {
+            const maxLabel =
+              b.max === Infinity ? "+" : " – " + money(b.min + b.taxable);
+            const pct = (b.rate * 100).toFixed(1);
+            const barWidth = totalTax > 0 ? ((b.tax / totalTax) * 100).toFixed(1) : 0;
+            return `
+            <div class="flex items-center gap-3 text-sm">
+              <div class="w-36 text-gray-400 text-xs shrink-0">${money(b.min)}${maxLabel}</div>
+              <div class="flex-1 bg-gray-800 rounded-full h-5 overflow-hidden">
+                <div class="h-full bg-green-600/70 rounded-full flex items-center pl-2 text-xs text-white font-medium"
+                     style="width: ${Math.max(barWidth, 8)}%">${pct}%</div>
+              </div>
+              <div class="w-28 text-right text-gray-300 text-xs shrink-0">${money(b.tax)}</div>
+            </div>`;
+          })
+          .join("");
+
+        const tbody = document.getElementById("breakdownBody");
+        tbody.innerHTML = PERIODS.map((p) => {
+          const gross = salary / p.divisor;
+          const tax = totalTax / p.divisor;
+          const accP = acc / p.divisor;
+          const slP = sl / p.divisor;
+          const ksP = ks / p.divisor;
+          const netP = net / p.divisor;
+          return `
+          <tr class="hover:bg-gray-800/50">
+            <td class="py-3 px-2 font-medium">${p.label}</td>
+            <td class="py-3 px-2 text-right text-gray-300">${money(gross)}</td>
+            <td class="py-3 px-2 text-right text-red-400">${money(tax)}</td>
+            <td class="py-3 px-2 text-right text-red-300">${money(accP)}</td>
+            <td class="py-3 px-2 text-right text-orange-300">${money(slP)}</td>
+            <td class="py-3 px-2 text-right text-blue-300">${money(ksP)}</td>
+            <td class="py-3 px-2 text-right text-green-400 font-semibold">${money(netP)}</td>
+          </tr>`;
+        }).join("");
+
+        document.getElementById("salaryResults").classList.remove("hidden");
+
+        drawDonut(
+          "chartDonut",
+          "chartDonutLegend",
+          [
+            { label: "Take Home", value: net, color: "#22c55e" },
+            { label: "Income Tax", value: totalTax, color: "#ef4444" },
+            { label: "ACC", value: acc, color: "#f97316" },
+            { label: "Student Loan", value: sl, color: "#fb7185" },
+            { label: "KiwiSaver", value: ks, color: "#3b82f6" },
+          ].filter((s) => s.value > 0),
+          [money(net), "Take Home"]
+        );
+
+        saveToStorage();
+
+        if (expenses.length > 0) calculateExpenses();
+      }
+
+      // ============================================
+      // TAB 2: EXPENSES → REQUIRED SALARY
+      // ============================================
+      function addExpense() {
+        const name = document.getElementById("expName").value.trim();
+        const amount = parseFloat(
+          document.getElementById("expAmount").value.replace(/[^0-9.]/g, "")
+        );
+        const freq = document.getElementById("expFreq").value;
+
+        if (!name) {
+          showToast("Please enter a description", "⚠️");
+          return;
+        }
+        if (!amount || amount <= 0) {
+          showToast("Please enter a valid amount", "⚠️");
+          return;
+        }
+
+        expenses.push({ name, amount, freq });
+        document.getElementById("expName").value = "";
+        document.getElementById("expAmount").value = "";
+        document.getElementById("expFreq").value = "monthly";
+        renderExpenses();
+        calculateExpenses();
+        saveToStorage();
+        showToast("Expense added", "✅");
+      }
+
+      function removeExpense(idx) {
+        expenses.splice(idx, 1);
+        renderExpenses();
+        calculateExpenses();
+        saveToStorage();
+      }
+
+      function renderExpenses() {
+        const list = document.getElementById("expenseList");
+        const empty = document.getElementById("noExpenses");
+        list.innerHTML = expenses
+          .map((e, i) => {
+            const annual = e.amount * (FREQ_TO_ANNUAL[e.freq] || 1);
+            return `
+            <div class="flex items-center justify-between bg-gray-800 border border-gray-700 rounded-lg px-4 py-2">
+              <div class="flex items-center gap-4 overflow-hidden">
+                <div class="font-medium">${escapeHtml(e.name)}</div>
+                <div class="text-gray-400 text-sm"> ${money(e.amount)} • ${e.freq}</div>
+                <div class="text-gray-300 text-sm hidden sm:block">Annual: ${money(annual)}</div>
+              </div>
+              <button
+                class="px-3 py-1.5 text-sm bg-red-600/60 hover:bg-red-600 text-white rounded-md"
+                onclick="removeExpense(${i})"
+              >
+                Remove
+              </button>
+            </div>`;
+          })
+          .join("");
+
+        empty.classList.toggle("hidden", expenses.length > 0);
+        document
+          .getElementById("expenseResults")
+          .classList.toggle("hidden", expenses.length === 0);
+      }
+
+      function totalAnnualExpenses() {
+        return expenses.reduce(
+          (sum, e) => sum + e.amount * (FREQ_TO_ANNUAL[e.freq] || 1),
+          0
+        );
+      }
+
+      function calculateExpenses() {
+        if (expenses.length === 0) {
+          document.getElementById("expenseResults").classList.add("hidden");
+          return;
+        }
+
+        const totalExp = totalAnnualExpenses();
+        const requiredGross = grossFromTargetNet(totalExp);
+        const deds = calcAllDeductions(requiredGross);
+        const effRate = (deds.totalTax / requiredGross) * 100;
+
+        // Summary cards
+        document.getElementById("totalExpenses").textContent = money(totalExp);
+        document.getElementById("requiredGross").textContent =
+          money(requiredGross);
+        document.getElementById("requiredTax").textContent = money(deds.total);
+        document.getElementById("requiredEffRate").textContent =
+          effRate.toFixed(2) + "%";
+
+        // Expense donut
+        drawDonut(
+          "chartExpDonut",
+          "chartExpDonutLegend",
+          expenses.map((e, i) => ({
+            label: e.name,
+            value: e.amount * (FREQ_TO_ANNUAL[e.freq] || 1),
+            color: CHART_COLORS[i % CHART_COLORS.length],
+          })),
+          [money(totalExp), "Annual Expenses"]
+        );
+
+        // Required salary split donut
+        const splitSegs = [
+          { label: "Expenses (Net)", value: totalExp, color: "#22c55e" },
+          { label: "Income Tax", value: deds.totalTax, color: "#ef4444" },
+          ...(settings.accEnabled
+            ? [{ label: "ACC", value: deds.acc, color: "#f97316" }]
+            : []),
+          ...(settings.slEnabled
+            ? [{ label: "Student Loan", value: deds.sl, color: "#fb7185" }]
+            : []),
+          ...(settings.ksEmployee > 0
+            ? [{ label: "KiwiSaver", value: deds.ks, color: "#3b82f6" }]
+            : []),
+        ];
+        drawDonut(
+          "chartExpSplit",
+          "chartExpSplitLegend",
+          splitSegs,
+          [money(requiredGross), "Required Gross"]
+        );
+
+        // Expenses horizontal bar
+        drawHorizontalBar(
+          "chartExpBar",
+          expenses.map((e, i) => ({
+            label: e.name,
+            value: e.amount * (FREQ_TO_ANNUAL[e.freq] || 1),
+            color: CHART_COLORS[i % CHART_COLORS.length],
+          }))
+        );
+
+        // Required salary by period table
+        const tbody = document.getElementById("requiredBreakdownBody");
+        tbody.innerHTML = PERIODS.map((p) => {
+          const gross = requiredGross / p.divisor;
+          const net = totalExp / p.divisor;
+          return `
+          <tr class="hover:bg-gray-800/50">
+            <td class="py-3 px-2 font-medium">${p.label}</td>
+            <td class="py-3 px-2 text-right text-gray-300">${money(gross)}</td>
+            <td class="py-3 px-2 text-right text-green-400 font-semibold">${money(net)}</td>
+          </tr>`;
+        }).join("");
+
+        // Comparison to actual salary (if provided)
+        const actualGross = getSalaryValue();
+        const compSection = document.getElementById("salaryCompSection");
+        if (actualGross > 0) {
+          const actual = calcAllDeductions(actualGross);
+          const surplus = actual.net - totalExp;
+
+          document.getElementById("compActualGross").textContent =
+            money(actualGross);
+          document.getElementById("compActualNet").textContent =
+            money(actual.net);
+          const pctNet =
+            actual.net > 0 ? ((totalExp / actual.net) * 100).toFixed(1) : "—";
+          document.getElementById("compExpPctNet").textContent =
+            (actual.net > 0 ? pctNet + "%" : "—");
+          document.getElementById("compSurplus").textContent = money(surplus);
+          document.getElementById("compSurplusLabel").textContent =
+            surplus >= 0 ? "Surplus / Year" : "Shortfall / Year";
+
+          // Surplus breakdown
+          const periodsEl = document.getElementById("compSurplusPeriods");
+          const per = PERIODS.map((p) => ({
+            label: p.label,
+            value: surplus / p.divisor,
+          }));
+          periodsEl.innerHTML = per
+            .map(
+              (x) => `
+            <div class="bg-gray-800 rounded-lg p-3 text-center">
+              <div class="text-xs text-gray-400">${x.label}</div>
+              <div class="text-lg font-semibold ${
+                x.value >= 0 ? "text-green-400" : "text-red-400"
+              }">${money(x.value)}</div>
+            </div>`
+            )
+            .join("");
+
+          // Actual allocation donut
+          const allocSegs = [
+            { label: "Expenses", value: Math.min(totalExp, actual.net), color: "#22c55e" },
+            { label: "Income Tax", value: actual.totalTax, color: "#ef4444" },
+            ...(settings.accEnabled
+              ? [{ label: "ACC", value: actual.acc, color: "#f97316" }]
+              : []),
+            ...(settings.slEnabled
+              ? [{ label: "Student Loan", value: actual.sl, color: "#fb7185" }]
+              : []),
+            ...(settings.ksEmployee > 0
+              ? [{ label: "KiwiSaver", value: actual.ks, color: "#3b82f6" }]
+              : []),
+            { label: "Surplus", value: Math.max(0, surplus), color: "#06b6d4" },
+          ].filter((s) => s.value > 0);
+
+          drawDonut(
+            "chartCompDonut",
+            "chartCompDonutLegend",
+            allocSegs,
+            [money(actualGross), "Your Gross"]
+          );
+
+          // Actual vs Required bar
+          drawGroupedBar(
+            "chartCompBar",
+            "chartCompBarLegend",
+            ["Annual", "Monthly", "Weekly"],
+            [
+              {
+                label: "Required Gross",
+                color: "#22c55e",
+                values: [requiredGross, requiredGross / 12, requiredGross / 52],
+              },
+              {
+                label: "Your Gross",
+                color: "#3b82f6",
+                values: [actualGross, actualGross / 12, actualGross / 52],
+              },
+            ]
+          );
+
+          // Waterfall: where salary goes
+          const wfItems = [
+            { label: "Gross Salary", value: actualGross, color: "#60a5fa", type: "start" },
+            { label: "Income Tax", value: actual.totalTax, color: "#ef4444", type: "subtract" },
+            ...(settings.accEnabled
+              ? [{ label: "ACC", value: actual.acc, color: "#f97316", type: "subtract" }]
+              : []),
+            ...(settings.slEnabled
+              ? [{ label: "Student Loan", value: actual.sl, color: "#fb7185", type: "subtract" }]
+              : []),
+            ...(settings.ksEmployee > 0
+              ? [{ label: "KiwiSaver", value: actual.ks, color: "#3b82f6", type: "subtract" }]
+              : []),
+            { label: "Net Pay", value: actual.net, color: "#22c55e", type: "end" },
+          ];
+          drawWaterfall("chartWaterfall", "chartWaterfallLegend", wfItems);
+
+          // Monthly gauge
+          const monthlyNet = actual.net / 12;
+          const monthlyExp = totalExp / 12;
+          drawGauge(
+            "chartGauge",
+            "chartGaugeLegend",
+            [
+              { label: "Expenses", value: Math.min(monthlyExp, monthlyNet), color: "#22c55e" },
+              { label: "Surplus", value: Math.max(0, monthlyNet - monthlyExp), color: "#06b6d4" },
+            ],
+            monthlyNet > 0 ? monthlyNet : monthlyExp
+          );
+
+          compSection.classList.remove("hidden");
+        } else {
+          compSection.classList.add("hidden");
+        }
+      }
+
+      // ============================================
+      // INIT
+      // ============================================
+      window.addEventListener("load", () => {
+        applySettingsToUI();
+        loadFromStorage();
+      });
+    </script>
+  </body>
+</html>

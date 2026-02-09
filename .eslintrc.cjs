@@ -1,4 +1,4 @@
-/** @type {import("eslint").Linter.Config} */
+// @ts-nocheck
 const config = {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {

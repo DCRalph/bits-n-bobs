@@ -118,4 +118,53 @@ Websites scraped from:
     href: "https://cars.w-g.co",
     dateAdded: new Date("2025-2-25"),
   },
+  {
+    title: "NZ Income Calculator",
+    category: "Projects",
+    caption:
+      "Calculate your New Zealand income tax, deductions, and required salary based on expenses. Includes KiwiSaver, Student Loan, and ACC calculations.",
+    description: `# NZ Income Calculator
+
+A comprehensive income tax calculator for New Zealand residents, featuring detailed breakdowns of deductions and salary requirements.
+
+## Features
+
+- **Salary Breakdown**: Calculate your take-home pay after all deductions
+  - Income tax calculations using NZ tax brackets (effective 1 April 2025)
+  - KiwiSaver contributions (0-10%)
+  - Student Loan repayments (configurable rate and threshold)
+  - ACC Earner's Levy (optional)
+
+- **Required Salary Calculator**: Determine the gross salary needed to cover your expenses
+  - Add expenses with different frequencies (weekly, fortnightly, monthly, quarterly, yearly)
+  - Automatically calculates required gross salary
+  - Compare your actual salary vs required salary
+
+- **Visualizations**: Multiple chart types to visualize your finances
+  - Donut charts for income breakdown
+  - Horizontal bar charts for expense breakdown
+  - Waterfall charts showing where your money goes
+  - Gauge charts for monthly budget overview
+  - Comparison charts between actual and required salary
+
+- **Data Management**:
+  - Export/Import your data as JSON
+  - Automatic local storage persistence
+  - Clear all data option
+
+## Tax Rates
+
+Uses New Zealand tax brackets effective from 1 April 2025:
+- 10.5% on income up to $15,600
+- 17.5% on income $15,600 - $53,500
+- 30% on income $53,500 - $78,100
+- 33% on income $78,100 - $180,000
+- 39% on income over $180,000
+
+All calculations are estimates only. Consult with a tax professional for official advice.
+
+`,
+    href: "/projects/tax-calc",
+    dateAdded: new Date("2026-2-8"),
+  },
 ];
